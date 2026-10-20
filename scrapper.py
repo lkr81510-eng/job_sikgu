@@ -2,7 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 
 keyword = "파이썬"
-url = f"https://search.incruit.com/list/search.asp?col=job&kw={keyword}"
+page = 5
+jobs = []
+
+for i in range(pages):
+    page = i*30
+
+url = f"https://search.incruit.com/list/search.asp?col=job&kw=%c6%c4%c0%cc%bd%e3&startno=0={page}"
 r = requests.get(url)
 # print(r.text)
 soup = BeautifulSoup(r.text, "html.parser")
@@ -11,8 +17,8 @@ soup = BeautifulSoup(r.text, "html.parser")
 lis = soup.find_all("li", class_="c_col")
 # print(lis)
 # print(len(lis))
+print(f"{page + 1} 페이지 크롤링 중 ...")
 
-jobs = []
 for li in lis:
     try:
         company = li.find("a", class_="cpname").text
@@ -35,4 +41,3 @@ for li in lis:
 
 print(jobs)
 print(len(jobs))
-    
