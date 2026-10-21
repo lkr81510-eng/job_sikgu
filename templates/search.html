@@ -1,29 +1,235 @@
-<html>
-    <head></head>
-    <body>
-        <h1>{{ keyword }} 잡서치결과 페이지입니다.</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>순번</th>
-                    <th>회사명</th>
-                    <th>공고제목</th>
-                    <th>회사위치</th>
-                    <th>상세보기</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for index, job in jobs %}
-                <tr>
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ job["company"] }}</td>
-                    <td>{{ job["title"] }}</td>
-                    <td>{{ job["location"] }}</td>
-                    <td>{{ job["link"] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ keyword }} 검색결과 - 잡스크래퍼</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+        <style>
+            :root {
+                --brand: #0b5cff;
+                --brand-dark: #0047d6;
+                --text: #222;
+                --sub: #777;
+                --line: #e4e6eb;
+                --bg: #f4f6f9;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: "Pretendard", "Malgun Gothic", sans-serif;
+                color: var(--text);
+                background: var(--bg);
+            }
+            a { color: inherit; text-decoration: none; }
+            .inner { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
 
+            /* 헤더: 로고 + 검색창 */
+            header { background: #fff; border-bottom: 1px solid var(--line); }
+            .head {
+                display: flex;
+                align-items: center;
+                gap: 32px;
+                padding: 20px 16px;
+            }
+            .logo {
+                font-size: 28px;
+                font-weight: 800;
+                letter-spacing: -1px;
+                color: var(--brand);
+                white-space: nowrap;
+            }
+            .logo span { color: var(--text); }
+            .search-box {
+                display: flex;
+                flex: 1;
+                max-width: 560px;
+                border: 2px solid var(--brand);
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            .search-box input {
+                flex: 1;
+                min-width: 0;
+                border: none;
+                outline: none;
+                padding: 11px 16px;
+                font-size: 15px;
+                font-family: inherit;
+            }
+            .search-box button {
+                border: none;
+                background: var(--brand);
+                color: #fff;
+                font-weight: 700;
+                font-family: inherit;
+                padding: 0 22px;
+                cursor: pointer;
+            }
+            .search-box button:hover { background: var(--brand-dark); }
+
+            /* 카테고리 탭 */
+            .tabs { display: flex; gap: 4px; }
+            .tabs a {
+                padding: 12px 18px;
+                font-size: 15px;
+                color: #555;
+                border-bottom: 3px solid transparent;
+            }
+            .tabs a.on {
+                color: var(--brand);
+                font-weight: 700;
+                border-bottom-color: var(--brand);
+            }
+
+            /* 결과 요약 */
+            .summary {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin: 28px 0 12px;
+            }
+            .summary h2 { font-size: 20px; font-weight: 700; }
+            .summary h2 em { font-style: normal; color: var(--brand); }
+            .summary .src { font-size: 13px; color: var(--sub); }
+
+            /* 공고 리스트 */
+            .list {
+                list-style: none;
+                background: #fff;
+                border: 1px solid var(--line);
+                border-top: 2px solid var(--text);
+            }
+            .item {
+                display: grid;
+                grid-template-columns: 48px 200px 1fr 120px;
+                align-items: center;
+                gap: 16px;
+                padding: 20px;
+                border-bottom: 1px solid var(--line);
+            }
+            .item:last-child { border-bottom: none; }
+            .item:hover { background: #f8faff; }
+            .num {
+                font-size: 14px;
+                color: #aaa;
+                text-align: center;
+            }
+            .company {
+                font-size: 15px;
+                font-weight: 600;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .title {
+                display: block;
+                font-size: 17px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+            .title:hover { color: var(--brand); text-decoration: underline; }
+            .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+            .tags span {
+                font-size: 12px;
+                color: #555;
+                background: var(--bg);
+                border-radius: 3px;
+                padding: 4px 8px;
+            }
+            .apply {
+                justify-self: end;
+                display: inline-block;
+                padding: 9px 18px;
+                border: 1px solid var(--brand);
+                border-radius: 4px;
+                color: var(--brand);
+                font-size: 14px;
+                font-weight: 700;
+                white-space: nowrap;
+            }
+            .apply:hover { background: var(--brand); color: #fff; }
+
+            .empty {
+                padding: 80px 20px;
+                text-align: center;
+                color: var(--sub);
+                line-height: 1.8;
+            }
+            .empty strong { color: var(--text); font-size: 17px; }
+
+            footer {
+                margin-top: 48px;
+                border-top: 1px solid var(--line);
+                background: #fff;
+                font-size: 12px;
+                color: var(--sub);
+                text-align: center;
+                padding: 20px 16px;
+            }
+
+            /* 모바일 */
+            @media (max-width: 720px) {
+                .head { flex-direction: column; align-items: stretch; gap: 14px; }
+                .logo { font-size: 24px; }
+                .tabs a { padding: 10px 12px; font-size: 14px; }
+                .item {
+                    grid-template-columns: 1fr auto;
+                    gap: 6px 12px;
+                    padding: 16px;
+                }
+                .num { display: none; }
+                .company { grid-column: 1 / -1; font-size: 13px; color: var(--sub); }
+                .title { font-size: 16px; }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="inner head">
+                <a href="/" class="logo">job<span>scrapper</span></a>
+                <form action="/search" class="search-box">
+                    <input type="text" name="keyword" value="{{ keyword }}" placeholder="직무, 기술스택, 회사명을 입력하세요" required />
+                    <button>검색</button>
+                </form>
+            </div>
+            <nav class="inner tabs">
+                <a href="#" class="on">채용공고</a>
+                <a href="#">기업정보</a>
+                <a href="#">인재정보</a>
+            </nav>
+        </header>
+
+        <main class="inner">
+            <div class="summary">
+                <h2>'<em>{{ keyword }}</em>' 채용공고 검색결과</h2>
+                <span class="src">출처: 인크루트</span>
+            </div>
+
+            <ul class="list">
+                {% for index, job in jobs %}
+                <li class="item">
+                    <span class="num">{{ index + 1 }}</span>
+                    <span class="company">{{ job["company"] }}</span>
+                    <div>
+                        <a href="{{ job['link'] }}" target="_blank" rel="noopener" class="title">{{ job["title"] }}</a>
+                        <div class="tags">
+                            <span>📍 {{ job["location"] }}</span>
+                        </div>
+                    </div>
+                    <a href="{{ job['link'] }}" target="_blank" rel="noopener" class="apply">상세보기</a>
+                </li>
+                {% else %}
+                <li class="empty">
+                    <strong>'{{ keyword }}'에 대한 채용공고가 없습니다.</strong><br />
+                    다른 키워드로 다시 검색해 보세요.
+                </li>
+                {% endfor %}
+            </ul>
+        </main>
+
+        <footer>
+            Copyright © jobscrapper. 채용정보 출처: 인크루트
+        </footer>
     </body>
 </html>
